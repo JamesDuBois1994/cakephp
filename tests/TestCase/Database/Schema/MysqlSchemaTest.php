@@ -14,7 +14,6 @@
  */
 namespace Cake\Test\TestCase\Database\Schema;
 
-use Cake\Core\Configure;
 use Cake\Database\Schema\Collection as SchemaCollection;
 use Cake\Database\Schema\MysqlSchema;
 use Cake\Database\Schema\Table;
@@ -99,8 +98,24 @@ class MysqlSchemaTest extends TestCase
                 ['type' => 'uuid', 'length' => null]
             ],
             [
-                'TINYTEXT',
+                'TEXT',
                 ['type' => 'text', 'length' => null]
+            ],
+            [
+                'TINYTEXT',
+                ['type' => 'text', 'length' => Table::LENGTH_TINY]
+            ],
+            [
+                'MEDIUMTEXT',
+                ['type' => 'text', 'length' => Table::LENGTH_MEDIUM]
+            ],
+            [
+                'LONGTEXT',
+                ['type' => 'text', 'length' => Table::LENGTH_LONG]
+            ],
+            [
+                'TINYBLOB',
+                ['type' => 'binary', 'length' => Table::LENGTH_TINY]
             ],
             [
                 'BLOB',
@@ -108,7 +123,11 @@ class MysqlSchemaTest extends TestCase
             ],
             [
                 'MEDIUMBLOB',
-                ['type' => 'binary', 'length' => null]
+                ['type' => 'binary', 'length' => Table::LENGTH_MEDIUM]
+            ],
+            [
+                'LONGBLOB',
+                ['type' => 'binary', 'length' => Table::LENGTH_LONG]
             ],
             [
                 'FLOAT',
@@ -150,7 +169,7 @@ class MysqlSchemaTest extends TestCase
     }
 
     /**
-     * Test parsing MySQL column types form field description.
+     * Test parsing MySQL column types from field description.
      *
      * @dataProvider convertColumnProvider
      * @return void
@@ -172,10 +191,12 @@ class MysqlSchemaTest extends TestCase
             'comment' => 'Comment section',
         ];
 
-        $driver = $this->getMock('Cake\Database\Driver\Mysql');
+        $driver = $this->getMockBuilder('Cake\Database\Driver\Mysql')->getMock();
         $dialect = new MysqlSchema($driver);
 
-        $table = $this->getMock('Cake\Database\Schema\Table', [], ['table']);
+        $table = $this->getMockBuilder('Cake\Database\Schema\Table')
+            ->setConstructorArgs(['table'])
+            ->getMock();
         $table->expects($this->at(0))->method('addColumn')->with('field', $expected);
 
         $dialect->convertColumnDescription($table, $field);
@@ -466,6 +487,42 @@ SQL;
                 ['type' => 'text', 'null' => false],
                 '`body` TEXT NOT NULL'
             ],
+            [
+                'body',
+                ['type' => 'text', 'length' => Table::LENGTH_TINY, 'null' => false],
+                '`body` TINYTEXT NOT NULL'
+            ],
+            [
+                'body',
+                ['type' => 'text', 'length' => Table::LENGTH_MEDIUM, 'null' => false],
+                '`body` MEDIUMTEXT NOT NULL'
+            ],
+            [
+                'body',
+                ['type' => 'text', 'length' => Table::LENGTH_LONG, 'null' => false],
+                '`body` LONGTEXT NOT NULL'
+            ],
+            // Blob / binary
+            [
+                'body',
+                ['type' => 'binary', 'null' => false],
+                '`body` BLOB NOT NULL'
+            ],
+            [
+                'body',
+                ['type' => 'binary', 'length' => Table::LENGTH_TINY, 'null' => false],
+                '`body` TINYBLOB NOT NULL'
+            ],
+            [
+                'body',
+                ['type' => 'binary', 'length' => Table::LENGTH_MEDIUM, 'null' => false],
+                '`body` MEDIUMBLOB NOT NULL'
+            ],
+            [
+                'body',
+                ['type' => 'binary', 'length' => Table::LENGTH_LONG, 'null' => false],
+                '`body` LONGBLOB NOT NULL'
+            ],
             // Integers
             [
                 'post_id',
@@ -720,7 +777,9 @@ SQL;
     public function testAddConstraintSql()
     {
         $driver = $this->_getMockedDriver();
-        $connection = $this->getMock('Cake\Database\Connection', [], [], '', false);
+        $connection = $this->getMockBuilder('Cake\Database\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
         $connection->expects($this->any())->method('driver')
             ->will($this->returnValue($driver));
 
@@ -769,7 +828,9 @@ SQL;
     public function testDropConstraintSql()
     {
         $driver = $this->_getMockedDriver();
-        $connection = $this->getMock('Cake\Database\Connection', [], [], '', false);
+        $connection = $this->getMockBuilder('Cake\Database\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
         $connection->expects($this->any())->method('driver')
             ->will($this->returnValue($driver));
 
@@ -853,7 +914,9 @@ SQL;
     public function testCreateSql()
     {
         $driver = $this->_getMockedDriver();
-        $connection = $this->getMock('Cake\Database\Connection', [], [], '', false);
+        $connection = $this->getMockBuilder('Cake\Database\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
         $connection->expects($this->any())->method('driver')
             ->will($this->returnValue($driver));
 
@@ -903,7 +966,9 @@ SQL;
     public function testCreateTemporary()
     {
         $driver = $this->_getMockedDriver();
-        $connection = $this->getMock('Cake\Database\Connection', [], [], '', false);
+        $connection = $this->getMockBuilder('Cake\Database\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
         $connection->expects($this->any())->method('driver')
             ->will($this->returnValue($driver));
         $table = (new Table('schema_articles'))->addColumn('id', [
@@ -923,7 +988,9 @@ SQL;
     public function testCreateSqlCompositeIntegerKey()
     {
         $driver = $this->_getMockedDriver();
-        $connection = $this->getMock('Cake\Database\Connection', [], [], '', false);
+        $connection = $this->getMockBuilder('Cake\Database\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
         $connection->expects($this->any())->method('driver')
             ->will($this->returnValue($driver));
 
@@ -987,7 +1054,9 @@ SQL;
     public function testDropSql()
     {
         $driver = $this->_getMockedDriver();
-        $connection = $this->getMock('Cake\Database\Connection', [], [], '', false);
+        $connection = $this->getMockBuilder('Cake\Database\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
         $connection->expects($this->any())->method('driver')
             ->will($this->returnValue($driver));
 
@@ -1005,7 +1074,9 @@ SQL;
     public function testTruncateSql()
     {
         $driver = $this->_getMockedDriver();
-        $connection = $this->getMock('Cake\Database\Connection', [], [], '', false);
+        $connection = $this->getMockBuilder('Cake\Database\Connection')
+            ->disableOriginalConstructor()
+            ->getMock();
         $connection->expects($this->any())->method('driver')
             ->will($this->returnValue($driver));
 
@@ -1022,7 +1093,7 @@ SQL;
      */
     public function testConstructConnectsDriver()
     {
-        $driver = $this->getMock('Cake\Database\Driver');
+        $driver = $this->getMockBuilder('Cake\Database\Driver')->getMock();
         $driver->expects($this->once())
             ->method('connect');
         $schema = new MysqlSchema($driver);
@@ -1036,7 +1107,9 @@ SQL;
     protected function _getMockedDriver()
     {
         $driver = new \Cake\Database\Driver\Mysql();
-        $mock = $this->getMock('FakePdo', ['quote']);
+        $mock = $this->getMockBuilder('FakePdo')
+            ->setMethods(['quote'])
+            ->getMock();
         $mock->expects($this->any())
             ->method('quote')
             ->will($this->returnCallback(function ($value) {

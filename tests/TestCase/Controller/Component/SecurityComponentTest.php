@@ -19,7 +19,6 @@ use Cake\Controller\Controller;
 use Cake\Controller\Exception\SecurityException;
 use Cake\Core\Configure;
 use Cake\Event\Event;
-use Cake\Network\Exception\BadRequestException;
 use Cake\Network\Request;
 use Cake\Network\Session;
 use Cake\TestSuite\TestCase;
@@ -153,7 +152,10 @@ class SecurityComponentTest extends TestCase
         parent::setUp();
 
         $session = new Session();
-        $request = $this->getMock('Cake\Network\Request', ['here'], ['posts/index']);
+        $request = $this->getMockBuilder('Cake\Network\Request')
+            ->setMethods(['here'])
+            ->setConstructorArgs(['posts/index'])
+            ->getMock();
         $request->addParams(['controller' => 'posts', 'action' => 'index']);
         $request->session($session);
         $request->expects($this->any())
@@ -477,7 +479,7 @@ class SecurityComponentTest extends TestCase
             'Model' => ['username' => 'nate', 'password' => 'foo', 'valid' => '0'],
             '_Token' => compact('fields', 'unlocked', 'debug')
         ];
-        $this->assertFalse($this->validatePost('SecurityException', 'Unexpected field \'Model.password\' in POST data, Unexpected field \'Model.username\' in POST data'));
+        $this->assertFalse($this->validatePost('AuthSecurityException', 'Unexpected field \'Model.password\' in POST data, Unexpected field \'Model.username\' in POST data'));
     }
 
     /**
@@ -498,7 +500,7 @@ class SecurityComponentTest extends TestCase
             'Model' => ['username' => 'nate', 'password' => 'foo', 'valid' => '0'],
             '_Token' => compact('fields')
         ];
-        $this->assertFalse($this->validatePost('SecurityException', '\'_Token.unlocked\' was not found in request data.'));
+        $this->assertFalse($this->validatePost('AuthSecurityException', '\'_Token.unlocked\' was not found in request data.'));
     }
 
     /**
@@ -517,7 +519,7 @@ class SecurityComponentTest extends TestCase
             'Model' => ['username' => 'nate', 'password' => 'foo', 'valid' => '0'],
             '_Token' => compact('unlocked')
         ];
-        $result = $this->validatePost('SecurityException', '\'_Token.fields\' was not found in request data.');
+        $result = $this->validatePost('AuthSecurityException', '\'_Token.fields\' was not found in request data.');
         $this->assertFalse($result, 'validatePost passed when fields were missing. %s');
     }
 
@@ -1303,7 +1305,9 @@ class SecurityComponentTest extends TestCase
         ];
         $this->assertTrue($this->validatePost());
 
-        $request = $this->getMock('Cake\Network\Request', ['here']);
+        $request = $this->getMockBuilder('Cake\Network\Request')
+            ->setMethods(['here'])
+            ->getMock();
         $request->expects($this->at(0))
             ->method('here')
             ->will($this->returnValue('/posts/index?page=1'));
